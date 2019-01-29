@@ -1,77 +1,102 @@
-import React, { Component } from 'react';
-import './App.css';
+import React, { Component } from "react";
+import "./App.css";
 
+import moment from "moment";
 
-const API_KEY = '74ceac1de02ecbbfa3ba3c53223788db';
-const base_URL = 'https://openweathermap.org/data/2.5/';
+import WeatherDisplay from "components/WeatherDisplay";
+
+const API_KEY = "74ceac1de02ecbbfa3ba3c53223788db";
+const base_URL = "https:/api.openweathermap.org/data/2.5/";
 const city_ID = {
-  poland: {
-    id: 798544,
-    country: "PL",
-    coord: {
-      lon: 20,
-      lat: 52
+  chicago: {
+    "id": 756692,
+    "name": "Trzebieszow",
+    "country": "PL",
+    "coord": {
+      "lon": 22.555019,
+      "lat": 51.990059
     }
   }
 };
 
-
-class App extends Component {
-
-  constructor(props){
+export default class App extends Component {
+  constructor(props) {
     super(props);
     this.state = {
-      data : [],
+      data: false,
       isLoading: true,
-    }
-
+      countryId: [city_ID]
+    };
   }
 
-  componentDidMount(){
+  componentDidMount() {
 
     let header = new Headers({
-      'Access-Control-Allow-Origin':'*',
-      'Content-Type': 'multipart/form-data'
-  });
+      "Access-Control-Allow-Origin": "*",
+      "Content-Type": "multipart/form-data"
+    });
 
-    fetch(`${base_URL}forecast?id=${city_ID.poland.id}&appid=${API_KEY}`,
-    {
-      method: "GET",
-      mode: 'cors',
-      header: header,
-    })
-    .then(res => res.json())
-    .then(result => {
-      this.setState({
-        isLoading: false,
-        data: result.results
-      });
-    })
-    .catch(error => {
-      this.setState({
-        isLoading: false,
-        error
-      });
-});
-  }
+    fetch(
+      `${base_URL}forecast?id=${
+        this.state.countryId[0].chicago.id
+      }&appid=${API_KEY}&units=metric`,
+      {
+        method: "GET",
+        mode: "cors",
+        header: header
+      }
+    )
+      .then(resp => resp.json())
+      .then(result => {
 
-  handleFetch = ()=>{
-    fetch()
-    .then()
-    .then()
+        const data = responseReduce(result.list);
+
+        this.setState({
+          isLoading: false,
+          data: data
+        })
+      })
+      .catch(error => {
+        this.setState({
+          isLoading: false,
+          error
+        });
+      });
   }
 
   render() {
-
-    const {isLoading} = this.state;
+    
+    const { isLoading, data, countryId } = this.state;
 
     return (
       <div className="App">
-        {isLoading && <p>Loading...</p>}
-        
+        {isLoading ? <p>Loading...</p> : <div><h1>City: {countryId[0].chicago.name}</h1><WeatherDisplay data={data} /></div>}
       </div>
     );
   }
 }
 
-export default App;
+function responseReduce(array) {
+  const dayArray = array.reduce((agg, elem, i) => {
+    const { dt, weather, main } = elem;
+
+    const dateFormat = "DD, MMMM, YYYY";
+    const date = moment.unix(dt).format(dateFormat);
+    const finalWeather = {
+      dt,
+      weather,
+      main
+    };
+
+    if (agg[date]) {
+      agg[date].push(finalWeather);
+    } else {
+      agg[date] = [finalWeather];
+    }
+
+    return agg;
+
+  }, {});
+  
+  return Object.entries(dayArray);
+}
