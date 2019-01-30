@@ -4,33 +4,88 @@ import "./App.css";
 import moment from "moment";
 
 import WeatherDisplay from "components/WeatherDisplay";
+import CitySelect from "components/CitySelect";
 
 const API_KEY = "74ceac1de02ecbbfa3ba3c53223788db";
 const base_URL = "https:/api.openweathermap.org/data/2.5/";
-const city_ID = {
-  chicago: {
-    "id": 756692,
-    "name": "Trzebieszow",
-    "country": "PL",
-    "coord": {
-      "lon": 22.555019,
-      "lat": 51.990059
+const city_ID = [
+  {
+    id: 2643743,
+    name: "London",
+    country: "GB",
+    coord: {
+      lon: -0.12574,
+      lat: 51.50853
     }
-  }
-};
+  },
+  {
+    id: 2968815,
+    name: "Paris",
+    country: "FR",
+    coord: {
+      lon: 2.3486,
+      lat: 48.853401
+    }
+  },
+  {
+    id: 6695624,
+    name: "Warszawa",
+    country: "PL",
+    coord: {
+      lon: 21.04191,
+      lat: 52.23547
+    }
+  },
+  {
+    id: 6359304,
+    name: "Madrid",
+    country: "ES",
+    coord: {
+      lon: -3.68275,
+      lat: 40.489349
+    }
+  },
+  {
+    id: 2950159,
+    name: "Berlin",
+    country: "DE",
+    coord: {
+      lon: 13.41053,
+      lat: 52.524368
+    }
+  },
+]
 
 export default class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
       data: false,
-      isLoading: true,
-      countryId: [city_ID]
+      isLoading: false,
+      countryId: false,
+      fetchedCountry:false
+      
     };
   }
 
   componentDidMount() {
+    this.setState({cityList: city_ID})
+  }
 
+  handleChange = (e) => {
+    console.log(e.target);
+    
+    this.setState({ countryId: e.target.value });
+  }
+
+
+  handleFetch = (id) => {
+
+    this.setState({
+      isLoading: true,
+      fetchedCountry: id
+    });
+    
     let header = new Headers({
       "Access-Control-Allow-Origin": "*",
       "Content-Type": "multipart/form-data"
@@ -38,7 +93,7 @@ export default class App extends Component {
 
     fetch(
       `${base_URL}forecast?id=${
-        this.state.countryId[0].chicago.id
+        id
       }&appid=${API_KEY}&units=metric`,
       {
         method: "GET",
@@ -66,15 +121,57 @@ export default class App extends Component {
 
   render() {
     
-    const { isLoading, data, countryId } = this.state;
+    const { isLoading, data, countryId, error, cityList, fetchedCountry } = this.state;
 
+
+    if(isLoading === false && data){
+      return (
+        <div className="App">
+        <div className="flex select">
+        {cityList && <CitySelect fn={this.handleChange} cities={cityList} />}
+        {countryId && <p className="button" onClick={()=>{
+          this.handleFetch(countryId);
+        }}>GET DATA</p>}
+        </div>
+          <WeatherDisplay cityList={cityList} countryId={fetchedCountry} data={data} />
+        </div>
+      );
+    } else if(error){
+      return (
+       <div className="App">
+       <div className="flex select">
+       {cityList && <CitySelect fn={this.handleChange} cities={cityList} />}
+       {countryId && <p className="button" onClick={()=>{
+         this.handleFetch(countryId);
+       }}>GET DATA</p>}
+       </div>
+       <p>Oops, something Went wrong! Be sure to add your private API key and try again later.</p>
+      </div>
+      );
+    }
     return (
       <div className="App">
-        {isLoading ? <p>Loading...</p> : <div><h1>City: {countryId[0].chicago.name}</h1><WeatherDisplay data={data} /></div>}
+      <div className="flex select">
+      {cityList && <CitySelect fn={this.handleChange} cities={cityList} />}
+      {countryId && <p className="button" onClick={()=>{
+        this.handleFetch(countryId);
+      }}>GET DATA</p>}
+      </div>
       </div>
     );
   }
 }
+
+
+
+
+
+
+
+
+
+
+
 
 function responseReduce(array) {
   const dayArray = array.reduce((agg, elem, i) => {

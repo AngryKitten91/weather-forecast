@@ -6,3 +6,13 @@
 .bold {
     font-weight: 700;
 }
+
+.flex {
+    display: flex;
+    align-items: center;
+    text-transform: capitalize;
+}
+
+.ico {
+    margin-right: 30px;
+}
